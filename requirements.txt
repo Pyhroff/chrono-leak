@@ -1,0 +1,6 @@
+requests
+pandas
+plotly
+colorama
+instaloader
+openai

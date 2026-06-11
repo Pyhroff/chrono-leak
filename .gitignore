@@ -1,0 +1,9 @@
+# Secrets — never commit your real API keys
+.env
+
+# Generated reports
+reports/
+
+# Python
+__pycache__/
+*.pyc
