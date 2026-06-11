@@ -24,8 +24,8 @@ exposure score, capped off with an AI-written forensic brief.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/Pyhroff/darkdecoder
-cd darkdecoder
+git clone https://github.com/Pyhroff/chrono-leak
+cd chrono-leak
 
 # 2. Install dependencies
 pip install -r requirements.txt
