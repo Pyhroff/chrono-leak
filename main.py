@@ -57,7 +57,7 @@ def get_target():
 
 def run_github_module(username):
     print("\n" + "=" * 60)
-    print("  [1/3] GITHUB SCRAPER")
+    print("  [1/5] GITHUB SCRAPER")
     print("=" * 60)
     result = scrape_github(username)
     if not result:
@@ -69,7 +69,7 @@ def run_github_module(username):
 
 def run_analyzer_module(username, data):
     print("\n" + "=" * 60)
-    print("  [2/3] TEMPORAL ANALYZER")
+    print("  [2/5] TEMPORAL ANALYZER")
     print("=" * 60)
     if not data:
         print("  [!] No data to analyze.")
@@ -92,7 +92,7 @@ def run_analyzer_module(username, data):
 
 def run_identity_module(username):
     print("\n" + "=" * 60)
-    print("  [3/3] IDENTITY SCANNER (self-validating v2)")
+    print("  [3/5] IDENTITY SCANNER (self-validating v2)")
     print("=" * 60)
     results = scan_identity(username)
     save_results(username, results)
