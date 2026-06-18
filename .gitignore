@@ -1,9 +1,28 @@
 # Secrets — never commit your real API keys
 .env
+.env.*
+!.env.example
 
 # Generated reports
 reports/
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS cruft
+.DS_Store
+Thumbs.db
