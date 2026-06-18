@@ -21,27 +21,10 @@ generator so the tool still produces a brief offline.
 """
 
 import os
+from env_config import get_key
 
-# ── LOAD API KEY FROM .env ────────────────────────────────────────────────────
-def _load_grok_key():
-    """Read GROK_API_KEY from environment or a local .env file."""
-    key = os.environ.get("GROK_API_KEY")
-    if key:
-        return key
-
-    # Manually parse a .env file in the project root (no extra dependency needed)
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    env_path = os.path.join(base_dir, ".env")
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("GROK_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return None
-
-
-GROK_API_KEY = _load_grok_key()
+# ── LOAD API KEY (environment or .env, via shared helper) ─────────────────────
+GROK_API_KEY  = get_key("GROK_API_KEY")
 GROK_BASE_URL = "https://api.x.ai/v1"
 GROK_MODEL    = "grok-2-latest"
 

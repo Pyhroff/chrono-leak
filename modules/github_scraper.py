@@ -13,9 +13,10 @@ from datetime import datetime, timezone
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 # GitHub allows 60 requests/hour without a token.
-# If you have a GitHub token, paste it here for 5000 requests/hour:
+# Set GITHUB_TOKEN in your environment or .env for 5000 requests/hour.
 # Get one at: github.com/settings/tokens (no special permissions needed)
-GITHUB_TOKEN = ""  # Leave empty or paste your token here
+from env_config import get_key
+GITHUB_TOKEN = get_key("GITHUB_TOKEN", "")
 
 HEADERS = {
     "User-Agent": "CHRONO-LEAK-Research-Tool",

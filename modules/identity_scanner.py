@@ -57,9 +57,11 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
-# Optional: paste a GitHub token here to lift the 60-req/hour limit to 5000.
-# Get one (no scopes needed) at: github.com/settings/tokens
-GITHUB_TOKEN = ""
+# Optional: set GITHUB_TOKEN in your environment or .env to lift the
+# 60-req/hour limit to 5000. Get one (no scopes needed) at:
+# github.com/settings/tokens
+from env_config import get_key
+GITHUB_TOKEN = get_key("GITHUB_TOKEN", "")
 GH_HEADERS = dict(HEADERS)
 if GITHUB_TOKEN:
     GH_HEADERS["Authorization"] = f"Bearer {GITHUB_TOKEN}"

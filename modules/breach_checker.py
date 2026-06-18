@@ -29,8 +29,10 @@ from datetime import datetime
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 # Get your free key at: https://haveibeenpwned.com/API/Key
-# Leave empty to skip email breach check (password check still works)
-HIBP_API_KEY = ""
+# Set HIBP_API_KEY in your environment or .env to enable the email breach
+# check. Leave it unset to skip that step (the password check still works).
+from env_config import get_key
+HIBP_API_KEY = get_key("HIBP_API_KEY", "")
 
 HIBP_HEADERS = {
     "User-Agent":    "CHRONO-LEAK-Personal-Security-Audit",
