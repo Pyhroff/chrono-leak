@@ -48,7 +48,8 @@ def load_data(username):
     Load the raw JSON data saved by Module 1.
     Returns a list of data points with parsed timestamps.
     """
-    filepath = f"reports/{username}_github_raw.json"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    filepath = os.path.join(base_dir, "reports", f"{username}_github_raw.json")
 
     if not os.path.exists(filepath):
         print(f"[!] No data found for '{username}'.")
@@ -415,7 +416,10 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
 </body>
 </html>"""
 
-    filepath = f"reports/{username}_report.html"
+    base_dir    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    reports_dir = os.path.join(base_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    filepath = os.path.join(reports_dir, f"{username}_report.html")
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(html)
 

@@ -8,6 +8,7 @@ Pure metadata. Pure timestamps.
 
 import requests
 import json
+import os
 from datetime import datetime, timezone
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -221,7 +222,12 @@ def save_raw_data(data, username):
     Save the raw scraped data to a JSON file.
     This lets us re-run analysis without re-scraping.
     """
-    filepath = f"reports/{username}_github_raw.json"
+    # Resolve reports/ at the project root and create it if missing —
+    # it's gitignored, so a fresh clone won't have it yet.
+    base_dir    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    reports_dir = os.path.join(base_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    filepath = os.path.join(reports_dir, f"{username}_github_raw.json")
 
     # Convert datetime objects to strings for JSON serialization
     clean_data = []
