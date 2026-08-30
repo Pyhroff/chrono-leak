@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Byte-compile everything (catches syntax errors)
+        run: python -m compileall -q main.py modules
+
+      - name: Import every module (catches import-time errors, no API keys needed)
+        run: |
+          python - << 'PYEOF'
+          import sys, importlib
+          sys.path.insert(0, "modules")
+          mods = [
+              "env_config", "github_scraper", "instagram_scraper",
+              "identity_scanner", "breach_checker", "analyzer",
+              "exposure_scorer", "ai_analyst",
+          ]
+          for m in mods:
+              importlib.import_module(m)
+              print(f"ok: {m}")
+          PYEOF
