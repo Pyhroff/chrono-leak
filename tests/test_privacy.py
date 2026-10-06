@@ -12,3 +12,11 @@ def test_redacts_private_keys():
 def test_sanitizes_nested_structures():
     data = {"profile": {"token": "sk-abcdefghijklmnopqrstuvwxyz"}}
     assert "[REDACTED-SECRET]" in sanitize_for_external_analysis(data)["profile"]["token"]
+
+
+def test_external_ai_requires_explicit_opt_in(monkeypatch):
+    import ai_analyst
+    monkeypatch.setattr(ai_analyst, "GROK_API_KEY", "configured")
+    monkeypatch.setattr(ai_analyst, "ALLOW_EXTERNAL_ANALYSIS", False)
+    brief = ai_analyst.generate_brief("demo", [], [], {}, [], {})
+    assert "offline" not in brief.lower() or "Exposure score" in brief
