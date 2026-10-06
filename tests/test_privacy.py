@@ -33,3 +33,13 @@ def test_timezone_confidence_is_capped_for_sparse_evidence():
     assert results
     assert results[0]["status"] == "insufficient_evidence"
     assert results[0]["confidence"] <= 39.9
+
+
+def test_html_escape_blocks_markup():
+    from report_utils import html_escape
+    payload = '<script>alert(1)</script>"'
+    escaped = html_escape(payload)
+    assert '<script>' not in escaped
+    assert '</script>' not in escaped
+    assert '&lt;script&gt;' in escaped
+    assert '&quot;' in escaped
