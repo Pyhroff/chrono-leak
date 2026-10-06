@@ -26,6 +26,7 @@ import json
 import os
 import time
 from datetime import datetime
+from urllib.parse import quote
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 # Get your free key at: https://haveibeenpwned.com/API/Key
@@ -58,7 +59,7 @@ def check_email_breaches(email):
     print(f"\n[*] Checking email: {email}")
     print("    (checking HaveIBeenPwned database...)")
 
-    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=false"
+    # Privacy-preserving email lookup: hash locally and send only the first 6 SHA-1 chars.\n    # HIBP requires an API key for this k-anonymity email endpoint.\n    digest = hashlib.sha1(email.strip().lower().encode("utf-8")).hexdigest().upper()\n    prefix, suffix = digest[:6], digest[6:]\n    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/range/{prefix}"
 
     try:
         response = requests.get(url, headers=HIBP_HEADERS, timeout=10)
@@ -75,10 +76,14 @@ def check_email_breaches(email):
 
         # 429 = rate limited, wait and retry
         if response.status_code == 429:
-            retry_after = int(response.headers.get("Retry-After", 5))
-            print(f"[!] Rate limited. Waiting {retry_after} seconds...")
+            retry_after = min(int(response.headers.get("Retry-After", 5)), 30)
+            print(f"[!] Rate limited. Waiting {retry_after} seconds (single retry)...")
             time.sleep(retry_after + 1)
-            return check_email_breaches(email)
+            response = requests.get(url, headers=HIBP_HEADERS, timeout=10)
+            if response.status_code == 200:
+                return response.json()
+            print(f"[!] HIBP retry failed (status {response.status_code}).")
+            return None
 
         if response.status_code == 200:
             breaches = response.json()
