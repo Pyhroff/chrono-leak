@@ -22,6 +22,7 @@ generator so the tool still produces a brief offline.
 
 import os
 from env_config import get_key
+from privacy import sanitize_for_external_analysis
 
 # ── LOAD API KEY (environment or .env, via shared helper) ─────────────────────
 GROK_API_KEY  = get_key("GROK_API_KEY")
@@ -32,6 +33,16 @@ GROK_MODEL    = "grok-2-latest"
 # ── PROMPT BUILDER ────────────────────────────────────────────────────────────
 def _build_prompt(username, found, profiles, correlation, tz_results, exposure):
     """Turn the raw module outputs into a clean prompt for Grok."""
+    safe = sanitize_for_external_analysis({
+        "username": username, "found": found, "profiles": profiles,
+        "correlation": correlation, "tz_results": tz_results, "exposure": exposure,
+    })
+    username = safe["username"]
+    found = safe["found"]
+    profiles = safe["profiles"]
+    correlation = safe["correlation"]
+    tz_results = safe["tz_results"]
+    exposure = safe["exposure"]
     lines = [f"OSINT target username: {username}", ""]
 
     lines.append("CONFIRMED ACCOUNTS:")
