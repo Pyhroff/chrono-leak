@@ -140,6 +140,19 @@ chrono-leak/
 
 ---
 
+## Privacy & external services
+
+CHRONO-LEAK is designed around a local-first analysis boundary:
+
+- GitHub and platform collection uses public metadata only.
+- The AI analyst redacts common API tokens and private-key material before sending analysis context to the configured xAI endpoint.
+- Password checks use HIBP's k-anonymous range API: only the first five SHA-1 characters are sent, never the password or full hash. HIBP documents this as its privacy-preserving password-search model. 
+- Email breach checks use HIBP's six-character k-anonymous email range API when an API key is configured, so the raw email address is not sent to the breach-search endpoint.
+- Unrelated HIBP hash-range results are discarded locally rather than stored.
+- Reports are written locally under `reports/`; that directory should remain gitignored.
+
+These safeguards reduce unnecessary disclosure, but they do not make external analysis risk-free. Review the data you are authorized to process before enabling the AI analyst or breach integrations.
+
 ## Responsible use
 
 CHRONO-LEAK is for **research and education**, and for auditing your own
