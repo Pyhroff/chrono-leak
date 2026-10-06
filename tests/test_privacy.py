@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "modules"))
+
 from privacy import redact_secrets, sanitize_for_external_analysis
 
 def test_redacts_common_api_keys():
