@@ -314,6 +314,8 @@ def save_exposure_report(username, scores, total_score, risk_level, risk_color, 
     reports_dir = os.path.join(base_dir, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
+    safe_username = html_escape(username)
+
     # Build category cards
     category_cards = ""
     for s in scores:
@@ -321,18 +323,18 @@ def save_exposure_report(username, scores, total_score, risk_level, risk_color, 
         color = "#69f0ae" if pct < 40 else "#ffa726" if pct < 70 else "#ef5350"
 
         findings_html = "".join(
-            f'<li style="margin:4px 0; color:#ccc">{f}</li>'
+            f'<li style="margin:4px 0; color:#ccc">{html_escape(f)}</li>'
             for f in s["findings"]
         )
         recs_html = "".join(
-            f'<li style="margin:4px 0; color:#aaa">{r}</li>'
+            f'<li style="margin:4px 0; color:#aaa">{html_escape(r)}</li>'
             for r in s["recommendations"]
         )
 
         category_cards += f"""
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center">
-            <h2 style="margin:0">{s['category'].upper()}</h2>
+            <h2 style="margin:0">{html_escape(s['category'].upper())}</h2>
             <div style="font-size:28px; font-weight:bold; color:{color}">
               {s['score']}/{s['max']}
             </div>
@@ -356,7 +358,7 @@ def save_exposure_report(username, scores, total_score, risk_level, risk_color, 
     html = f"""<!DOCTYPE html>
 <html>
 <head>
-  <title>CHRONO-LEAK Exposure Score: {username}</title>
+  <title>CHRONO-LEAK Exposure Score: {safe_username}</title>
   <style>
     body  {{ font-family:'Segoe UI',sans-serif; background:#1a1a2e; color:#eee; margin:0; padding:20px; }}
     h1    {{ color:#00e5ff; letter-spacing:2px; margin-bottom:4px; }}
@@ -401,7 +403,7 @@ def save_exposure_report(username, scores, total_score, risk_level, risk_color, 
       {risk_desc}
     </div>
     <div style="color:#555; font-size:12px; margin-top:12px">
-      Target: @{username} &nbsp;|&nbsp; {datetime.now().strftime('%Y-%m-%d %H:%M')}
+      Target: @{safe_username} &nbsp;|&nbsp; {datetime.now().strftime('%Y-%m-%d %H:%M')}
     </div>
   </div>
 
