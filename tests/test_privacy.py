@@ -43,3 +43,40 @@ def test_html_escape_blocks_markup():
     assert '</script>' not in escaped
     assert '&lt;script&gt;' in escaped
     assert '&quot;' in escaped
+
+
+def test_github_rate_limit_helper_retries(monkeypatch):
+    import github_scraper
+
+    class Response:
+        def __init__(self, status, headers=None, payload=None):
+            self.status_code = status
+            self.headers = headers or {}
+            self._payload = payload or {}
+        def json(self):
+            return self._payload
+
+    responses = iter([
+        Response(429, {"Retry-After": "0"}),
+        Response(200, payload={"login": "demo"}),
+    ])
+    monkeypatch.setattr(github_scraper.requests, "get", lambda *args, **kwargs: next(responses))
+    monkeypatch.setattr(github_scraper.time, "sleep", lambda _: None)
+    payload, status = github_scraper._request_json("https://api.github.com/users/demo")
+    assert status == "ok"
+    assert payload["login"] == "demo"
+
+
+def test_github_error_classification(monkeypatch):
+    import github_scraper
+
+    class Response:
+        status_code = 401
+        headers = {}
+        def json(self):
+            return {}
+
+    monkeypatch.setattr(github_scraper.requests, "get", lambda *args, **kwargs: Response())
+    payload, status = github_scraper._request_json("https://api.github.com/users/demo")
+    assert payload is None
+    assert status == "unauthorized"
