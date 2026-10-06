@@ -27,6 +27,7 @@ import os
 import time
 from datetime import datetime
 from urllib.parse import quote
+from report_utils import html_escape
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 # Get your free key at: https://haveibeenpwned.com/API/Key
@@ -266,6 +267,8 @@ def save_breach_report(email, breaches, password_count, pastes):
     reports_dir = os.path.join(base_dir, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
+    safe_email = html_escape(email)
+
     # Generate breach rows
     breach_rows = ""
     if breaches:
@@ -277,10 +280,10 @@ def save_breach_report(email, breaches, password_count, pastes):
 
             breach_rows += f"""
             <tr>
-              <td style="padding:10px 14px; font-weight:bold">{b.get('Name','?')}</td>
-              <td style="padding:10px 14px; color:#888">{b.get('BreachDate','?')}</td>
+              <td style="padding:10px 14px; font-weight:bold">{html_escape(b.get('Name','?'))}</td>
+              <td style="padding:10px 14px; color:#888">{html_escape(b.get('BreachDate','?'))}</td>
               <td style="padding:10px 14px; color:#aaa; font-size:12px">
-                {', '.join(data_classes[:5])}
+                {html_escape(', '.join(data_classes[:5]))}
               </td>
               <td style="padding:10px 14px">
                 <span style="background:{severity_color}22; color:{severity_color};
@@ -307,7 +310,7 @@ def save_breach_report(email, breaches, password_count, pastes):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
-  <title>CHRONO-LEAK Breach Report: {email}</title>
+  <title>CHRONO-LEAK Breach Report: {safe_email}</title>
   <style>
     body  {{ font-family:'Segoe UI',sans-serif; background:#1a1a2e; color:#eee; margin:0; padding:20px; }}
     h1    {{ color:#00e5ff; letter-spacing:2px; }}
@@ -329,7 +332,7 @@ def save_breach_report(email, breaches, password_count, pastes):
 
   <div class="card">
     <h2>TARGET</h2>
-    <div style="font-size:20px">{email}</div>
+    <div style="font-size:20px" >{safe_email}</div>
   </div>
 
   <div class="card">
