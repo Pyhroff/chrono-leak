@@ -153,73 +153,70 @@ def find_dead_zone(heatmap):
 
 # ── TIMEZONE PREDICTOR ────────────────────────────────────────────────────────
 
-def predict_timezone(heatmap, dead_center_utc):
-    """
-    Given the center of the dead zone in UTC, predict the timezone.
-
-    Logic:
-    - The dead zone center happens around 3am local time
-    - So: local_3am = dead_center_utc
-    - Therefore: UTC_offset = dead_center_utc - 3
-    - We find the closest real timezone to that offset
-
-    Also scores each timezone by how well their activity pattern
-    fits a "normal waking hours" distribution (7am-11pm local).
-    """
+def predict_timezone(heatmap, dead_center_utc, sample_count=None):
+    """Rank timezone candidates without overstating sparse-timestamp evidence."""
     if dead_center_utc is None:
         return []
 
-    # Estimated UTC offset
+    total_activity = sum(heatmap.values())
+    sample_count = sample_count if sample_count is not None else total_activity
+    if total_activity == 0:
+        return []
+
     estimated_offset = dead_center_utc - 3
-    # Normalize to -12 to +14 range
     if estimated_offset > 14:
         estimated_offset -= 24
     if estimated_offset < -12:
         estimated_offset += 24
 
+    # Evidence quality: sample volume and concentration matter.
+    coverage = min(1.0, total_activity / 96.0)
+    active_hours = sum(1 for count in heatmap.values() if count > 0)
+    diversity = min(1.0, active_hours / 12.0)
+
     results = []
-
     for tz_name, tz_offset in TIMEZONES.items():
-        # How far is this timezone from our estimate?
         distance = abs(tz_offset - estimated_offset)
+        distance_score = max(0.0, 100.0 - (distance * 20.0))
 
-        # Score the activity pattern fit for this timezone
-        # Shift the activity hours to local time for this timezone
-        local_activity_score = 0
-        total_activity = sum(heatmap.values())
-
-        if total_activity == 0:
-            continue
-
+        local_activity_score = 0.0
         for utc_hour, count in heatmap.items():
             local_hour = (utc_hour + tz_offset) % 24
-
-            # Activity between 7am and 11pm local = normal (scores high)
             if 7 <= local_hour <= 23:
                 local_activity_score += count
             else:
-                # Activity between midnight and 7am = suspicious (scores low)
                 local_activity_score -= count * 0.5
 
-        # Normalize the score to 0-100
-        fit_score = max(0, (local_activity_score / total_activity) * 100)
+        fit_score = max(0.0, (local_activity_score / total_activity) * 100.0)
 
-        # Final confidence = combination of distance match + activity fit
-        # Lower distance = better match
-        distance_score = max(0, 100 - (distance * 20))
-        confidence = (distance_score * 0.6) + (fit_score * 0.4)
+        raw_confidence = (distance_score * 0.55) + (fit_score * 0.45)
+        evidence_factor = 0.35 + (0.65 * ((coverage + diversity) / 2.0))
+        confidence = raw_confidence * evidence_factor
 
         results.append({
-            "timezone":       tz_name,
-            "offset":         tz_offset,
-            "confidence":     round(confidence, 1),
-            "distance":       distance,
-            "fit_score":      round(fit_score, 1)
+            "timezone": tz_name,
+            "offset": tz_offset,
+            "confidence": round(confidence, 1),
+            "raw_confidence": round(raw_confidence, 1),
+            "evidence_quality": round(evidence_factor * 100, 1),
+            "sample_count": sample_count,
+            "active_hours": active_hours,
+            "distance": distance,
+            "fit_score": round(fit_score, 1),
         })
 
-    # Sort by confidence (highest first)
     results.sort(key=lambda x: x["confidence"], reverse=True)
-    return results[:5]  # Return top 5 candidates
+
+    # Never present a weak result as a strong attribution.
+    if results and (sample_count < 12 or active_hours < 4):
+        for result in results:
+            result["confidence"] = min(result["confidence"], 39.9)
+            result["status"] = "insufficient_evidence"
+    else:
+        for result in results:
+            result["status"] = "candidate"
+
+    return results[:5]
 
 # ── BEHAVIORAL PROFILER ───────────────────────────────────────────────────────
 
@@ -392,7 +389,7 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
     <h2>TIMEZONE VERDICT</h2>
     <div class="verdict">
       <div class="tz">{top_tz['timezone']}</div>
-      <div class="conf">Confidence: {top_tz['confidence']}%</div>
+      <div class="conf">Confidence: {top_tz['confidence']}% &mdash; {top_tz.get('status', 'candidate').replace('_', ' ')}</div>
     </div>
     <br>
     <h2>ALL CANDIDATES</h2>
@@ -460,8 +457,8 @@ def analyze(username):
 
     # Step 4: Predict timezone
     print("[*] Predicting timezone...")
-    tz_results  = predict_timezone(heatmap, dead_center)
-    top_tz      = tz_results[0] if tz_results else {"timezone": "Unknown", "confidence": 0, "offset": 0}
+    tz_results  = predict_timezone(heatmap, dead_center, sample_count=len(data))
+    top_tz      = tz_results[0] if tz_results else {"timezone": "Unknown", "confidence": 0, "offset": 0, "status": "insufficient_evidence"}
 
     # Step 5: Build behavioral profile
     print("[*] Building behavioral profile...")
