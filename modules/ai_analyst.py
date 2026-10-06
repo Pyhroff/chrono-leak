@@ -28,6 +28,7 @@ from privacy import sanitize_for_external_analysis
 GROK_API_KEY  = get_key("GROK_API_KEY")
 GROK_BASE_URL = "https://api.x.ai/v1"
 GROK_MODEL    = "grok-2-latest"
+ALLOW_EXTERNAL_ANALYSIS = get_key("ALLOW_EXTERNAL_ANALYSIS", "false").strip().lower() in {"1", "true", "yes"}
 
 
 # ── PROMPT BUILDER ────────────────────────────────────────────────────────────
@@ -88,8 +89,12 @@ def generate_brief(username, found, profiles, correlation,
     """
     prompt = _build_prompt(username, found, profiles, correlation, tz_results, exposure)
 
-    if not GROK_API_KEY:
-        print("  [i] No GROK_API_KEY found — using offline template brief.")
+    if not GROK_API_KEY or not ALLOW_EXTERNAL_ANALYSIS:
+        if GROK_API_KEY and not ALLOW_EXTERNAL_ANALYSIS:
+            print("  [i] External AI analysis is disabled — using offline template brief.")
+            print("      Set ALLOW_EXTERNAL_ANALYSIS=true only after reviewing the data-sharing boundary.")
+        else:
+            print("  [i] No GROK_API_KEY found — using offline template brief.")
         print("      Add GROK_API_KEY to .env for AI-generated analysis.")
         return _fallback_brief(username, found, profiles, correlation, tz_results, exposure)
 
