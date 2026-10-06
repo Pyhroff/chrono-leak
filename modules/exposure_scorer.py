@@ -95,6 +95,7 @@ def score_temporal(tz_results, profile):
         }
 
     top_confidence = tz_results[0]["confidence"] if tz_results else 0
+    evidence_status = tz_results[0].get("status", "candidate") if tz_results else "insufficient_evidence"
     behavioral_type = profile.get("behavioral_type", "") if profile else ""
 
     # Score based on confidence
@@ -106,16 +107,17 @@ def score_temporal(tz_results, profile):
         score = 13 + int((top_confidence - 70) / 10) # 13-20
 
     findings = [
-        f"Timezone predicted with {top_confidence}% confidence",
+        f"Timezone candidate confidence: {top_confidence}%",
         f"Top candidate: {tz_results[0]['timezone']}",
+        f"Evidence status: {evidence_status.replace("_", " ")}",
     ]
     if behavioral_type:
         findings.append(f"Behavioral pattern detected: {behavioral_type}")
 
     recommendations = []
-    if top_confidence > 60:
+    if evidence_status == "candidate" and top_confidence > 60:
         recommendations.append("Spread activity across different times of day to obscure patterns")
-    if top_confidence > 80:
+    if evidence_status == "candidate" and top_confidence > 80:
         recommendations.append("Your routine is highly predictable — vary your online schedule")
     recommendations.append("Using a VPN does NOT hide behavioral timing patterns")
 
