@@ -14,6 +14,7 @@ import os
 from datetime import datetime, timezone
 from collections import Counter
 import math
+from report_utils import html_escape
 
 # ── TIMEZONE DATABASE ─────────────────────────────────────────────────────────
 # Common timezones with their UTC offset in hours
@@ -310,6 +311,7 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
     Open it in any browser to see a visual dashboard.
     """
     top_tz = tz_results[0] if tz_results else {"timezone": "Unknown", "confidence": 0, "offset": 0}
+    safe_username = html_escape(username)
 
     # Build heatmap rows for HTML
     max_count = max(heatmap.values()) if heatmap.values() else 1
@@ -342,7 +344,7 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
         bg = "#e8f5e9" if i == 0 else "white"
         tz_rows += f"""
         <tr style="background:{bg}">
-          <td style="padding:8px 12px">{tz['timezone']}</td>
+          <td style="padding:8px 12px">{html_escape(tz['timezone'])}</td>
           <td style="padding:8px 12px; font-weight:bold; color:#2e7d32">
             {tz['confidence']}%
           </td>
@@ -351,7 +353,7 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
     html = f"""<!DOCTYPE html>
 <html>
 <head>
-  <title>CHRONO-LEAK Report: {username}</title>
+  <title>CHRONO-LEAK Report: {safe_username}</title>
   <style>
     body {{ font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }}
     .container {{ max-width: 900px; margin: 0 auto; }}
@@ -398,7 +400,7 @@ def save_html_report(username, heatmap, weekly_map, tz_results, profile, data):
 
   <div class="card">
     <h2>BEHAVIORAL PROFILE</h2>
-    {"".join(f'<div class="profile-item"><span class="profile-label">{k.replace("_"," ").upper()}</span><span class="profile-value">{v}</span></div>' for k, v in profile.items() if k != "error")}
+    {"".join(f'<div class="profile-item"><span class="profile-label">{html_escape(k.replace("_"," ").upper())}</span><span class="profile-value">{html_escape(v)}</span></div>' for k, v in profile.items() if k != "error")}
   </div>
 
   <div class="card">
