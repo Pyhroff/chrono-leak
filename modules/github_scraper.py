@@ -9,6 +9,7 @@ Pure metadata. Pure timestamps.
 import requests
 import json
 import os
+import time
 from datetime import datetime, timezone
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -27,6 +28,57 @@ if GITHUB_TOKEN:
 
 # ── FUNCTIONS ─────────────────────────────────────────────────────────────────
 
+# ── HTTP CLIENT ────────────────────────────────────────────────────────────────
+
+MAX_RETRIES = 3
+BACKOFF_SECONDS = 2
+REQUEST_TIMEOUT = 10
+
+
+def _request_json(url):
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
+        except requests.RequestException as exc:
+            if attempt >= MAX_RETRIES:
+                print(f"[!] Network error: {exc}")
+                return None, "network_error"
+            time.sleep(BACKOFF_SECONDS * (2 ** attempt))
+            continue
+        if response.status_code == 200:
+            try:
+                return response.json(), "ok"
+            except ValueError:
+                return None, "invalid_json"
+        if response.status_code == 404:
+            return None, "not_found"
+        if response.status_code == 401:
+            return None, "unauthorized"
+        if response.status_code in (403, 429):
+            retry_after = response.headers.get("Retry-After")
+            remaining = response.headers.get("X-RateLimit-Remaining")
+            reset = response.headers.get("X-RateLimit-Reset")
+            if retry_after:
+                delay = min(int(retry_after), 60)
+            elif remaining == "0" and reset:
+                delay = max(1, min(int(reset) - int(time.time()), 60))
+            else:
+                delay = min(60, BACKOFF_SECONDS * (2 ** attempt))
+            if attempt >= MAX_RETRIES:
+                return None, "rate_limited"
+            print(f"[!] GitHub throttled request; waiting {delay}s...")
+            time.sleep(delay)
+            continue
+        if response.status_code >= 500:
+            if attempt >= MAX_RETRIES:
+                return None, f"server_error_{response.status_code}"
+            time.sleep(BACKOFF_SECONDS * (2 ** attempt))
+            continue
+        return None, f"client_error_{response.status_code}"
+    return None, "unknown_error"
+
+
+
 def get_user_info(username):
     """
     Step 1: Check if the user exists and grab basic profile info.
@@ -35,19 +87,13 @@ def get_user_info(username):
     print(f"\n[*] Looking up GitHub user: {username}")
 
     url = f"https://api.github.com/users/{username}"
-    response = requests.get(url, headers=HEADERS)
-
-    # 404 means the user doesn't exist
-    if response.status_code == 404:
+    data, status = _request_json(url)
+    if status == "not_found":
         print(f"[!] User '{username}' not found on GitHub.")
         return None
-
-    # 403 means we hit the rate limit
-    if response.status_code == 403:
-        print("[!] Rate limit hit. Add a GitHub token to GITHUB_TOKEN variable above.")
+    if data is None:
+        print(f"[!] GitHub user lookup failed: {status}")
         return None
-
-    data = response.json()
 
     print(f"[+] Found: {data.get('name', 'No name')} (@{data['login']})")
     print(f"    Account created: {data['created_at']}")
@@ -70,12 +116,10 @@ def get_all_repos(username):
     # GitHub paginates results (max 100 per page), so we loop through all pages
     while True:
         url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}"
-        response = requests.get(url, headers=HEADERS)
-
-        if response.status_code != 200:
+        repos, status = _request_json(url)
+        if status != "ok":
+            print(f"[!] Repository page {page} stopped: {status}")
             break
-
-        repos = response.json()
 
         # If the page is empty, we've got everything
         if not repos:
@@ -109,13 +153,10 @@ def get_commit_timestamps(username, repos):
         repo_name = repo_data["repo_name"]
         url = f"https://api.github.com/repos/{username}/{repo_name}/commits?author={username}&per_page=100"
 
-        response = requests.get(url, headers=HEADERS)
-
-        # Some repos might be empty or have restricted access
-        if response.status_code != 200:
+        commits, status = _request_json(url)
+        if status != "ok":
+            print(f"    [{repo_name}] -> skipped ({status})")
             continue
-
-        commits = response.json()
 
         # Sometimes GitHub returns a dict (error message) instead of a list
         if not isinstance(commits, list):
@@ -152,12 +193,10 @@ def get_public_events(username):
 
     while page <= 3:  # GitHub caps events at 3 pages (300 events max)
         url = f"https://api.github.com/users/{username}/events/public?per_page=100&page={page}"
-        response = requests.get(url, headers=HEADERS)
-
-        if response.status_code != 200:
+        events, status = _request_json(url)
+        if status != "ok":
+            print(f"[!] Event page {page} stopped: {status}")
             break
-
-        events = response.json()
 
         if not events:
             break
