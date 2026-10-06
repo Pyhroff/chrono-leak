@@ -24,3 +24,12 @@ def test_external_ai_requires_explicit_opt_in(monkeypatch):
     monkeypatch.setattr(ai_analyst, "ALLOW_EXTERNAL_ANALYSIS", False)
     brief = ai_analyst.generate_brief("demo", [], [], {}, [], {})
     assert "offline" not in brief.lower() or "Exposure score" in brief
+
+
+def test_timezone_confidence_is_capped_for_sparse_evidence():
+    from analyzer import predict_timezone
+    heatmap = {hour: (1 if hour in {1, 2, 3} else 0) for hour in range(24)}
+    results = predict_timezone(heatmap, 2, sample_count=3)
+    assert results
+    assert results[0]["status"] == "insufficient_evidence"
+    assert results[0]["confidence"] <= 39.9
