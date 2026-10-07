@@ -109,7 +109,7 @@ def score_temporal(tz_results, profile):
     findings = [
         f"Timezone candidate confidence: {top_confidence}%",
         f"Top candidate: {tz_results[0]['timezone']}",
-        f"Evidence status: {evidence_status.replace("_", " ")}",
+        f"Evidence status: {evidence_status.replace('_', ' ')}",
     ]
     if behavioral_type:
         findings.append(f"Behavioral pattern detected: {behavioral_type}")
