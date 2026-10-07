@@ -24,10 +24,10 @@ saving an HTML dashboard for each stage to `reports/`:
 | # | Stage | What it does |
 |---|-------|--------------|
 | 1 | **GitHub scraper** | Collects public activity timestamps (repos, commits, events) — metadata only, never file contents |
-| 2 | **Temporal analyzer** | Finds the daily "dead zone" (sleep window) and infers timezone + behavioral routine from activity timing |
-| 3 | **Identity scanner** | Self-validating username search across 30+ platforms, then extracts real name / bio / location from confirmed accounts and correlates them |
+| 2 | **Temporal analyzer** | Finds low-activity windows and estimates timezone + behavioral patterns from activity timing |
+| 3 | **Identity scanner** | Validates username results across 30+ platforms, then extracts public profile clues and correlates them as probabilistic evidence |
 | 4 | **Exposure scorer** | Fuses everything into a single exposure score out of 100 across five categories |
-| 5 | **AI analyst (Grok)** | Writes a human-readable forensic threat brief (falls back to an offline template if no API key) |
+| 5 | **AI analyst (Grok)** | Writes a human-readable defensive exposure brief (falls back to an offline template if no API key) |
 
 ### The identity scanner is self-validating
 
@@ -35,22 +35,23 @@ Naive username checkers trust "HTTP 200 = account exists", which produces
 piles of false positives (login walls, SPA shells, soft-404 pages). Before
 trusting any platform, CHRONO-LEAK probes it with random garbage usernames;
 if the platform claims the garbage account "exists", that platform is
-marked **unreliable** and its result is thrown away. What's left is only
-genuinely confirmed accounts.
+marked **unreliable** and its result is thrown away. Results that pass the validation checks are treated as higher-confidence account signals, but platform behavior can still produce false positives or false negatives.
 
 ### Exposure score
 
-Five categories, 20 points each, fused into a `/100` score:
+Five categories, 20 points each, fused into a `/100` **project-specific exposure heuristic**. It is not a probability of compromise, a standardized risk rating, or a security certification:
 
 `Identity · Temporal · Network · Location · Security`
 
-| Score | Risk level |
-|-------|------------|
+| Score | Project label |
+|-------|---------------|
 | 0–20  | LOW |
 | 21–40 | MODERATE |
 | 41–60 | HIGH |
 | 61–80 | CRITICAL |
 | 81–100| SEVERE |
+
+These labels are intended for comparing findings within CHRONO-LEAK, not as externally validated risk levels.
 
 ---
 
@@ -113,8 +114,10 @@ python modules/instagram_scraper.py   # pull timing/location metadata from a pub
 ```
 
 The breach checker uses HIBP's **k-anonymity** model for passwords — only
-the first five characters of the SHA-1 hash ever leave your machine, so the
-password itself is never transmitted.
+the first five characters of the SHA-1 hash leave your machine, so the
+password itself and full hash are not transmitted. Email hash-range searches
+similarly use the first six SHA-1 characters when the configured HIBP plan
+supports that endpoint. citeturn1search0
 
 ---
 
@@ -140,14 +143,26 @@ chrono-leak/
 
 ---
 
+## Limitations & interpretation
+
+CHRONO-LEAK is an OSINT self-audit prototype, not a definitive identity, location, sleep, or threat-attribution system. Results depend on public platform behavior, API availability, rate limits, username collisions, incomplete breach datasets, and the amount and diversity of activity available for analysis.
+
+- A timezone result is an estimate from activity timing; it does not establish where a person lives or is physically located.
+- A "dead zone" is a low-activity pattern, not proof that someone was asleep.
+- Identity correlation is heuristic evidence. Shared names/usernames can belong to different people, and the same person can use different names.
+- "Confirmed" platform results mean they passed this project's validation checks; they are not independently verified ownership.
+- Exposure scores are project-specific heuristics and should not be interpreted as probabilities, compliance ratings, or evidence that an account is compromised.
+- AI-generated briefs are summaries of supplied signals, not authoritative forensic conclusions.
+- Breach databases are incomplete and may omit sensitive, retired, or otherwise unavailable records.
+
 ## Privacy & external services
 
 CHRONO-LEAK is designed around a local-first analysis boundary:
 
 - GitHub and platform collection uses public metadata only.
-- The AI analyst redacts common API tokens and private-key material before sending analysis context to the configured xAI endpoint.
+- The AI analyst redacts common API tokens and private-key material before sending analysis context to the configured xAI endpoint. External analysis is opt-in and disabled by default unless `ALLOW_EXTERNAL_ANALYSIS=true` is set.
 - Password checks use HIBP's k-anonymous range API: only the first five SHA-1 characters are sent, never the password or full hash. HIBP documents this as its privacy-preserving password-search model. 
-- Email breach checks use HIBP's six-character k-anonymous email range API when an API key is configured, so the raw email address is not sent to the breach-search endpoint.
+- Email breach checks use HIBP's six-character k-anonymous email range API when an API key and eligible HIBP subscription are configured, so the raw email address is not sent to the breach-search endpoint. HIBP documents this as a paid feature whose returned unrelated suffixes must be discarded immediately. citeturn1search0turn1search4
 - Unrelated HIBP hash-range results are discarded locally rather than stored.
 - Reports are written locally under `reports/`; that directory should remain gitignored.
 
@@ -155,8 +170,7 @@ These safeguards reduce unnecessary disclosure, but they do not make external an
 
 ## Responsible use
 
-CHRONO-LEAK is for **research and education**, and for auditing your own
-footprint. Only point it at:
+CHRONO-LEAK is for **research, education, and authorized self-assessment**. Only point it at:
 
 - **yourself**, or
 - an account you **own** or have **explicit written permission** to assess.
