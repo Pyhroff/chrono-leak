@@ -5,11 +5,7 @@
 [![Use: Educational](https://img.shields.io/badge/use-research%20%26%20education-red.svg)](#responsible-use)
 [![OSINT](https://img.shields.io/badge/OSINT-self--audit-00e5ff.svg)](#)
 
-> A personal OSINT self-audit tool. Point it at a username and it shows you
-> exactly what an attacker can learn about you from **public data alone** —
-> confirmed accounts, recovered identity, behavioral timezone, breach
-> exposure, and an overall exposure score, capped off with an AI-written
-> forensic brief.
+> A personal OSINT self-audit tool that surfaces signals an observer may be able to derive from **public data alone** — account presence, public identity clues, approximate temporal patterns, breach exposure, and a project-specific exposure score, with an optional AI-generated analysis brief.
 
 CHRONO-LEAK is built for **defensive self-assessment**: see your own
 digital footprint the way a stranger would, then close the gaps it finds.
@@ -117,7 +113,7 @@ The breach checker uses HIBP's **k-anonymity** model for passwords — only
 the first five characters of the SHA-1 hash leave your machine, so the
 password itself and full hash are not transmitted. Email hash-range searches
 similarly use the first six SHA-1 characters when the configured HIBP plan
-supports that endpoint. citeturn1search0
+supports that endpoint.
 
 ---
 
@@ -162,7 +158,7 @@ CHRONO-LEAK is designed around a local-first analysis boundary:
 - GitHub and platform collection uses public metadata only.
 - The AI analyst redacts common API tokens and private-key material before sending analysis context to the configured xAI endpoint. External analysis is opt-in and disabled by default unless `ALLOW_EXTERNAL_ANALYSIS=true` is set.
 - Password checks use HIBP's k-anonymous range API: only the first five SHA-1 characters are sent, never the password or full hash. HIBP documents this as its privacy-preserving password-search model. 
-- Email breach checks use HIBP's six-character k-anonymous email range API when an API key and eligible HIBP subscription are configured, so the raw email address is not sent to the breach-search endpoint. HIBP documents this as a paid feature whose returned unrelated suffixes must be discarded immediately. citeturn1search0turn1search4
+- Email breach checks use HIBP's six-character k-anonymous email range API when an API key and eligible HIBP subscription are configured, so the raw email address is not sent to the breach-search endpoint. HIBP documents this as a paid feature whose returned unrelated suffixes must be discarded immediately.
 - Unrelated HIBP hash-range results are discarded locally rather than stored.
 - Reports are written locally under `reports/`; that directory should remain gitignored.
 
