@@ -1,5 +1,6 @@
 # CHRONO-LEAK
 
+[![CI](https://github.com/Pyhroff/chrono-leak/actions/workflows/ci.yml/badge.svg)](https://github.com/Pyhroff/chrono-leak/actions/workflows/ci.yml)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Use: Educational](https://img.shields.io/badge/use-research%20%26%20education-red.svg)](#responsible-use)
