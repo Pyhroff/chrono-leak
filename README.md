@@ -112,9 +112,9 @@ python modules/instagram_scraper.py   # pull timing/location metadata from a pub
 
 The breach checker uses HIBP's **k-anonymity** model for passwords — only
 the first five characters of the SHA-1 hash leave your machine, so the
-password itself and full hash are not transmitted. Email hash-range searches
-similarly use the first six SHA-1 characters when the configured HIBP plan
-supports that endpoint.
+password itself and full hash are not transmitted. The email check uses HIBP's
+standard v3 account search, which needs `HIBP_API_KEY` and sends the address
+itself (URL-encoded) to HIBP.
 
 ---
 

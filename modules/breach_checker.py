@@ -60,7 +60,9 @@ def check_email_breaches(email):
     print(f"\n[*] Checking email: {email}")
     print("    (checking HaveIBeenPwned database...)")
 
-    # Privacy-preserving email lookup: hash locally and send only the first 6 SHA-1 chars.\n    # HIBP requires an API key for this k-anonymity email endpoint.\n    digest = hashlib.sha1(email.strip().lower().encode("utf-8")).hexdigest().upper()\n    prefix, suffix = digest[:6], digest[6:]\n    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/range/{prefix}"
+    # HIBP's v3 account search needs an API key and receives the address itself (URL-encoded).
+    # Only the password check below uses k-anonymity (5-character SHA-1 prefix).
+    url = f"https://haveibeenpwned.com/api/v3/breachedaccount/{quote(email.strip(), safe='')}?truncateResponse=false"
 
     try:
         response = requests.get(url, headers=HIBP_HEADERS, timeout=10)
