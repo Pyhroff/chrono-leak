@@ -19,6 +19,8 @@ import json
 import os
 from datetime import datetime
 
+from report_utils import html_escape
+
 
 # ── SCORING RUBRICS ───────────────────────────────────────────────────────────
 
